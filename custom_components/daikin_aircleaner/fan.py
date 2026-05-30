@@ -69,7 +69,12 @@ class Aircleaner(CoordinatorEntity, FanEntity):
     def preset_mode(self) -> str:
         return self._attr_preset_mode
 
-    async def async_turn_on(self, **kwargs) -> None:
+    async def async_turn_on(
+        self,
+        percentage: int | None = None,
+        preset_mode: str | None = None,
+        **kwargs,
+    ) -> None:
         await self._set({"pow": "1"})
 
     async def async_turn_off(self, **kwargs) -> None:
