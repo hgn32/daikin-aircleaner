@@ -3,9 +3,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import urllib.parse
+from pathlib import Path
 
 import aiohttp
 
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -17,6 +19,19 @@ from .const import CONF_IP_ADDRESS, DEFAULT_UPDATE_INTERVAL, DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.FAN, Platform.BINARY_SENSOR, Platform.SELECT]
+
+_WWW_DIR = Path(__file__).parent / "www"
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    await hass.http.async_register_static_paths([
+        StaticPathConfig(
+            "/daikin_aircleaner/daikin-aircleaner-card.js",
+            _WWW_DIR / "daikin-aircleaner-card.js",
+            cache_headers=False,
+        )
+    ])
+    return True
 
 _RETRY_DELAYS = (1, 2, 4)
 
