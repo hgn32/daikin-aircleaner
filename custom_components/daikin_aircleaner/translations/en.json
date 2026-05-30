@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Daikin Aircleaner",
+        "data": {
+          "ip_address": "IP Address",
+          "name": "Name"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Device is already configured."
+    },
+    "error": {
+      "name_exists": "This name is already in use."
+    }
+  }
+}

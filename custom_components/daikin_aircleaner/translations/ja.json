@@ -1,0 +1,19 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ダイキン 空気清浄機",
+        "data": {
+          "ip_address": "IPアドレス",
+          "name": "名前"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "このデバイスはすでに設定済みです。"
+    },
+    "error": {
+      "name_exists": "この名前はすでに使用されています。"
+    }
+  }
+}
