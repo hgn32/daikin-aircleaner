@@ -70,13 +70,13 @@ class Aircleaner(CoordinatorEntity, FanEntity):
         return self._attr_preset_mode
 
     async def async_turn_on(self, **kwargs) -> None:
-        await self._set({"pow": 1})
+        await self._set({"pow": "1"})
 
     async def async_turn_off(self, **kwargs) -> None:
-        await self._set({"pow": 0})
+        await self._set({"pow": "0"})
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
-        data: dict = {"pow": 1}
+        data: dict = {"pow": "1"}
         if preset_mode == "おまかせ":
             data.update({"mode": "1", "airvol": "0", "humd": "4"})
         elif preset_mode == "のど/はだ":
