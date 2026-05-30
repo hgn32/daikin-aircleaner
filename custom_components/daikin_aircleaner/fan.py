@@ -47,6 +47,7 @@ class Aircleaner(CoordinatorEntity, FanEntity):
         FanEntityFeature.PRESET_MODE | FanEntityFeature.TURN_OFF | FanEntityFeature.TURN_ON
     )
     _attr_preset_modes = _PRESET_MODES
+    _attr_preset_mode = "unknown"
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
@@ -58,16 +59,10 @@ class Aircleaner(CoordinatorEntity, FanEntity):
             manufacturer="Daikin",
             model="Aircleaner",
         )
-        self._attr_preset_mode = "unknown"
 
     @property
     def is_on(self) -> bool:
-        data = self.coordinator.data or {}
-        return data.get("pow") == "1"
-
-    @property
-    def preset_mode(self) -> str:
-        return self._attr_preset_mode
+        return (self.coordinator.data or {}).get("pow") == "1"
 
     async def async_turn_on(
         self,
@@ -108,7 +103,7 @@ class Aircleaner(CoordinatorEntity, FanEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         self._attr_preset_mode = self._calc_preset()
-        self.async_write_ha_state()
+        super()._handle_coordinator_update()
 
     async def _set(self, data: dict) -> None:
         response = await self._api.set(data)
@@ -128,9 +123,7 @@ class Aircleaner(CoordinatorEntity, FanEntity):
         if mode == "4":
             return "のど/はだ"
 
-        mode_prefix = {
-            "0": "手", "2": "節電", "3": "花粉", "5": "サーキュ"
-        }.get(mode)
+        mode_prefix = {"0": "手", "2": "節電", "3": "花粉", "5": "サーキュ"}.get(mode)
         if mode_prefix is None:
             _LOGGER.debug("Unknown preset (mode:%s, airvol:%s, humd:%s)", mode, airvol, humd)
             return "unknown"
@@ -140,9 +133,8 @@ class Aircleaner(CoordinatorEntity, FanEntity):
             airvol_label = _AIRVOL_LABEL.get(airvol or "", "")
             if airvol_label and humd_label:
                 return f"手:{airvol_label}-{humd_label}"
-        else:
-            if humd_label:
-                return f"{mode_prefix}:{humd_label}"
+        elif humd_label:
+            return f"{mode_prefix}:{humd_label}"
 
         _LOGGER.debug("Unknown preset (mode:%s, airvol:%s, humd:%s)", mode, airvol, humd)
         return "unknown"
