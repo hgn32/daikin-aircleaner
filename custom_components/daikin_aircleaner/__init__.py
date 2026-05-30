@@ -16,7 +16,7 @@ from .const import CONF_IP_ADDRESS, DEFAULT_UPDATE_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.FAN, Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.FAN, Platform.BINARY_SENSOR, Platform.SELECT]
 
 _RETRY_DELAYS = (1, 2, 4)
 

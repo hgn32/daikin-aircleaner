@@ -13,22 +13,15 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-_PRESET_MODES: list[str] = [
-    "unknown",
-    "手:風量自動-加湿無", "手:風量自動-加湿弱", "手:風量自動-加湿標準", "手:風量自動-加湿高",
-    "手:風量弱-加湿無", "手:風量弱-加湿弱", "手:風量弱-加湿標準", "手:風量弱-加湿高",
-    "手:風量標準-加湿無", "手:風量標準-加湿弱", "手:風量標準-加湿標準", "手:風量標準-加湿高",
-    "手:風量高-加湿無", "手:風量高-加湿弱", "手:風量高-加湿標準", "手:風量高-加湿高",
-    "手:風量最高-加湿無", "手:風量最高-加湿弱", "手:風量最高-加湿標準", "手:風量最高-加湿高",
-    "おまかせ",
-    "節電:加湿無", "節電:加湿弱", "節電:加湿標準", "節電:加湿高",
-    "花粉:加湿無", "花粉:加湿弱", "花粉:加湿標準", "花粉:加湿高",
-    "のど/はだ",
-    "サーキュ:加湿無", "サーキュ:加湿弱", "サーキュ:加湿標準", "サーキュ:加湿高",
-]
-
-_AIRVOL_LABEL = {"0": "風量自動", "1": "風量弱", "2": "風量標準", "3": "風量高", "5": "風量最高"}
-_HUMD_LABEL = {"0": "加湿無", "1": "加湿弱", "2": "加湿標準", "3": "加湿高"}
+_MODE_TO_LABEL = {
+    "0": "手動",
+    "1": "おまかせ",
+    "2": "節電",
+    "3": "花粉",
+    "4": "のど/はだ",
+    "5": "サーキュ",
+}
+_LABEL_TO_MODE = {v: k for k, v in _MODE_TO_LABEL.items()}
 
 
 async def async_setup_entry(
@@ -46,8 +39,8 @@ class Aircleaner(CoordinatorEntity, FanEntity):
     _attr_supported_features = (
         FanEntityFeature.PRESET_MODE | FanEntityFeature.TURN_OFF | FanEntityFeature.TURN_ON
     )
-    _attr_preset_modes = _PRESET_MODES
-    _attr_preset_mode = "unknown"
+    _attr_preset_modes = list(_MODE_TO_LABEL.values())
+    _attr_preset_mode: str | None = None
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
@@ -76,33 +69,16 @@ class Aircleaner(CoordinatorEntity, FanEntity):
         await self._set({"pow": "0"})
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
-        data: dict = {"pow": "1"}
-        if preset_mode == "おまかせ":
-            data.update({"mode": "1", "airvol": "0", "humd": "4"})
-        elif preset_mode == "のど/はだ":
-            data.update({"mode": "4", "airvol": "0", "humd": "4"})
-        else:
-            if "手:" in preset_mode:
-                data["mode"] = "0"
-            elif "節電:" in preset_mode:
-                data.update({"mode": "2", "airvol": "0"})
-            elif "花粉:" in preset_mode:
-                data.update({"mode": "3", "airvol": "0"})
-            elif "サーキュ:" in preset_mode:
-                data.update({"mode": "5", "airvol": "0"})
-            for val, label in _AIRVOL_LABEL.items():
-                if label in preset_mode:
-                    data["airvol"] = val
-                    break
-            for val, label in _HUMD_LABEL.items():
-                if label in preset_mode:
-                    data["humd"] = val
-                    break
-        await self._set(data)
+        mode = _LABEL_TO_MODE.get(preset_mode)
+        if mode is None:
+            _LOGGER.error("Unknown preset mode: %s", preset_mode)
+            return
+        await self._set({"pow": "1", "mode": mode})
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        self._attr_preset_mode = self._calc_preset()
+        data = self.coordinator.data or {}
+        self._attr_preset_mode = _MODE_TO_LABEL.get(data.get("mode", ""))
         super()._handle_coordinator_update()
 
     async def _set(self, data: dict) -> None:
@@ -111,30 +87,3 @@ class Aircleaner(CoordinatorEntity, FanEntity):
             await self.coordinator.async_request_refresh()
         else:
             _LOGGER.error("Failed to set data: %s, response: %s", data, response)
-
-    def _calc_preset(self) -> str:
-        d = self.coordinator.data or {}
-        mode = d.get("mode")
-        airvol = d.get("airvol")
-        humd = d.get("humd")
-
-        if mode == "1":
-            return "おまかせ"
-        if mode == "4":
-            return "のど/はだ"
-
-        mode_prefix = {"0": "手", "2": "節電", "3": "花粉", "5": "サーキュ"}.get(mode)
-        if mode_prefix is None:
-            _LOGGER.debug("Unknown preset (mode:%s, airvol:%s, humd:%s)", mode, airvol, humd)
-            return "unknown"
-
-        humd_label = _HUMD_LABEL.get(humd or "", "")
-        if mode == "0":
-            airvol_label = _AIRVOL_LABEL.get(airvol or "", "")
-            if airvol_label and humd_label:
-                return f"手:{airvol_label}-{humd_label}"
-        elif humd_label:
-            return f"{mode_prefix}:{humd_label}"
-
-        _LOGGER.debug("Unknown preset (mode:%s, airvol:%s, humd:%s)", mode, airvol, humd)
-        return "unknown"
