@@ -47,7 +47,6 @@ class _BaseSelect(CoordinatorEntity, SelectEntity):
         )
 
     def _current_params(self) -> dict:
-        """Return current full control state from coordinator."""
         d = self.coordinator.data or {}
         return {
             "pow":    d.get("pow", "1"),
@@ -55,6 +54,11 @@ class _BaseSelect(CoordinatorEntity, SelectEntity):
             "airvol": d.get("airvol", "0"),
             "humd":   d.get("humd", "0"),
         }
+
+    @property
+    def available(self) -> bool:
+        mode = (self.coordinator.data or {}).get("mode")
+        return mode not in ("1", "4")  # おまかせ / のど/はだ 中は操作不可
 
     async def _set(self, patch: dict) -> None:
         data = {**self._current_params(), **patch}

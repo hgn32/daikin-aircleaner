@@ -1,4 +1,4 @@
-# Daikin Aircleaner - Home Assistant カスタムコンポーネント
+# Daikin Air Cleaner - Home Assistant カスタムコンポーネント
 
 ダイキン製空気清浄機をHome Assistantで制御するためのカスタムコンポーネントです。ローカルネットワーク経由でHTTP APIを使って機器と通信します。
 
@@ -9,62 +9,60 @@
 
 ## 機能
 
-- **ファンエンティティ**: 電源のオン/オフ、運転モード（プリセット）の切り替え
+- **ファンエンティティ**: 電源のオン/オフ、運転モードの切り替え
+- **セレクトエンティティ**: 風量・加湿レベルの個別制御
 - **バイナリセンサー**: 給水タンクの満水検知
+- **カスタムカード**: タップで開くボトムシートダイアログ
 
-### 対応プリセットモード
+### 運転モード
 
-| カテゴリ | モード |
-|----------|--------|
-| 手動 | 風量（自動/弱/標準/高/最高）× 加湿（無/弱/標準/高） の組み合わせ |
+| モード | 説明 |
+|--------|------|
 | おまかせ | 自動で最適運転 |
-| 節電 | 省エネ運転（加湿レベル選択可） |
-| 花粉 | 花粉対策運転（加湿レベル選択可） |
+| 手動 | 風量・加湿を手動設定 |
+| 節電 | 省エネ運転 |
+| 花粉 | 花粉対策運転 |
 | のど/はだ | 肌・のどうるおい運転 |
-| サーキュレーター | サーキュレーション運転（加湿レベル選択可） |
+| サーキュ | サーキュレーション運転 |
 
 ## インストール
 
 ### HACS（推奨）
 
-1. HACSを開き、「カスタムリポジトリ」から `https://github.com/hgn32/daikin_aircleaner` を追加します。
+1. HACSを開き、「カスタムリポジトリ」から `https://github.com/hgn32/daikin-aircleaner` を追加します。
 2. カテゴリは「Integration」を選択します。
-3. 「Daikin Aircleaner」をインストールします。
+3. 「Daikin Air Cleaner」をインストールします。
 4. Home Assistantを再起動します。
 
 ### 手動インストール
 
-1. このリポジトリの `custom_components/daikin_aircleaner/` ディレクトリを、Home Assistantの設定ディレクトリ内の `custom_components/` にコピーします。
-   ```
-   <config>/custom_components/daikin_aircleaner/
-   ```
+1. `custom_components/daikin_aircleaner/` を HA の `<config>/custom_components/` にコピーします。
 2. Home Assistantを再起動します。
 
 ## 設定
 
-インストール後、UIから設定します。
+1. 「設定」→「デバイスとサービス」→「統合を追加」
+2. 「Daikin Air Cleaner」を検索して選択
+3. IPアドレスと名前を入力
 
-1. 「設定」→「デバイスとサービス」→「統合を追加」を開きます。
-2. 「Daikin Aircleaner」を検索して選択します。
-3. 以下の情報を入力します。
+## カスタムカード
 
-| 項目 | 説明 |
-|------|------|
-| IPアドレス | 空気清浄機のIPアドレス（例: `192.168.1.100`） |
-| 名前 | Home Assistant上での表示名（例: `リビング空気清浄機`） |
+Lovelaceリソースに追加：
 
-4. 「送信」をクリックして完了です。
+```yaml
+resources:
+  - url: /daikin_aircleaner/daikin-aircleaner-card.js
+    type: module
+```
 
-> **ヒント**: 空気清浄機に固定IPアドレスを割り当てることを推奨します（ルーターのDHCP予約機能などを使用）。
+カード設定例：
 
-## エンティティ
-
-デバイスを追加すると、以下のエンティティが作成されます。
-
-| エンティティ | 種別 | 説明 |
-|-------------|------|------|
-| `fan.<名前>` | Fan | 電源制御・運転モード切替 |
-| `binary_sensor.<名前>_water_supply` | Binary Sensor | 給水タンク満水（`on` = 給水が必要） |
+```yaml
+type: custom:daikin-aircleaner-card
+entity: fan.living_air_cleaner
+airvol_entity: select.living_air_cleaner_airvol
+humd_entity: select.living_air_cleaner_humd
+```
 
 ## ライセンス
 

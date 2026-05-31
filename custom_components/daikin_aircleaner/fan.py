@@ -73,7 +73,10 @@ class Aircleaner(CoordinatorEntity, FanEntity):
         if mode is None:
             _LOGGER.error("Unknown preset mode: %s", preset_mode)
             return
-        await self._set({"pow": "1", "mode": mode})
+        patch: dict = {"pow": "1", "mode": mode}
+        if mode in ("1", "4"):  # おまかせ / のど/はだ は固定値
+            patch.update({"airvol": "0", "humd": "4"})
+        await self._set(patch)
 
     @callback
     def _handle_coordinator_update(self) -> None:

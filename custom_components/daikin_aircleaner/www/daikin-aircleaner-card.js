@@ -145,10 +145,15 @@ const STYLES = `
     border-color: var(--primary-color);
     color: #fff;
   }
-  .chip:hover:not(.active) {
+  .chip:hover:not(.active):not(:disabled) {
     border-color: var(--primary-color);
     color: var(--primary-color);
   }
+  .chip:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .section.dimmed .section-label { opacity: 0.4; }
 `;
 
 class DaikinAircleanerCard extends HTMLElement {
@@ -275,6 +280,13 @@ class DaikinAircleanerCard extends HTMLElement {
     this._setActive('mode-chips', mode);
     this._setActive('airvol-chips', airvol);
     this._setActive('humd-chips', humd);
+
+    // おまかせ / のど/はだ 中は風量・加湿を無効化
+    const fixedMode = mode === 'おまかせ' || mode === 'のど/はだ';
+    this._setDisabled('airvol-chips', fixedMode);
+    this._setDisabled('humd-chips', fixedMode);
+    this.shadowRoot.getElementById('airvol-chips').closest('.section').classList.toggle('dimmed', fixedMode);
+    this.shadowRoot.getElementById('humd-chips').closest('.section').classList.toggle('dimmed', fixedMode);
   }
 
   _state(entityId) {
@@ -287,6 +299,12 @@ class DaikinAircleanerCard extends HTMLElement {
     this.shadowRoot.getElementById(containerId)
       ?.querySelectorAll('.chip')
       .forEach(c => c.classList.toggle('active', c.dataset.value === value));
+  }
+
+  _setDisabled(containerId, disabled) {
+    this.shadowRoot.getElementById(containerId)
+      ?.querySelectorAll('.chip')
+      .forEach(c => { c.disabled = disabled; });
   }
 
   _open()  { this.shadowRoot.getElementById('overlay').classList.add('open'); }
