@@ -15,5 +15,15 @@
     "error": {
       "name_exists": "This name is already in use."
     }
+  },
+  "entity": {
+    "select": {
+      "airvol": {
+        "name": "Fan Speed"
+      },
+      "humd": {
+        "name": "Humidity"
+      }
+    }
   }
 }

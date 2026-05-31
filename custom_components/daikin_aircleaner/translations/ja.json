@@ -15,5 +15,15 @@
     "error": {
       "name_exists": "この名前はすでに使用されています。"
     }
+  },
+  "entity": {
+    "select": {
+      "airvol": {
+        "name": "風量"
+      },
+      "humd": {
+        "name": "加湿"
+      }
+    }
   }
 }
