@@ -46,16 +46,23 @@ class _BaseSelect(CoordinatorEntity, SelectEntity):
             model="Aircleaner",
         )
 
-    async def _set(self, data: dict) -> None:
+    def _current_params(self) -> dict:
+        """Return current full control state from coordinator."""
+        d = self.coordinator.data or {}
+        return {
+            "pow":    d.get("pow", "1"),
+            "mode":   d.get("mode", "0"),
+            "airvol": d.get("airvol", "0"),
+            "humd":   d.get("humd", "0"),
+        }
+
+    async def _set(self, patch: dict) -> None:
+        data = {**self._current_params(), **patch}
         response = await self._api.set(data)
         if response and "ret=OK" in response:
             await self.coordinator.async_request_refresh()
         else:
             _LOGGER.error("Failed to set data: %s, response: %s", data, response)
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        super()._handle_coordinator_update()
 
 
 class AirvolSelect(_BaseSelect):
@@ -75,7 +82,7 @@ class AirvolSelect(_BaseSelect):
         if airvol is None:
             _LOGGER.error("Unknown airvol option: %s", option)
             return
-        await self._set({"pow": "1", "airvol": airvol})
+        await self._set({"airvol": airvol})
 
 
 class HumdSelect(_BaseSelect):
@@ -95,4 +102,4 @@ class HumdSelect(_BaseSelect):
         if humd is None:
             _LOGGER.error("Unknown humd option: %s", option)
             return
-        await self._set({"pow": "1", "humd": humd})
+        await self._set({"humd": humd})

@@ -81,7 +81,17 @@ class Aircleaner(CoordinatorEntity, FanEntity):
         self._attr_preset_mode = _MODE_TO_LABEL.get(data.get("mode", ""))
         super()._handle_coordinator_update()
 
-    async def _set(self, data: dict) -> None:
+    def _current_params(self) -> dict:
+        d = self.coordinator.data or {}
+        return {
+            "pow":    d.get("pow", "1"),
+            "mode":   d.get("mode", "0"),
+            "airvol": d.get("airvol", "0"),
+            "humd":   d.get("humd", "0"),
+        }
+
+    async def _set(self, patch: dict) -> None:
+        data = {**self._current_params(), **patch}
         response = await self._api.set(data)
         if response and "ret=OK" in response:
             await self.coordinator.async_request_refresh()
