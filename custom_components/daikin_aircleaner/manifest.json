@@ -1,6 +1,6 @@
 {
   "domain": "daikin_aircleaner",
-  "name": "Daikin Aircleaner",
+  "name": "Daikin Air Cleaner",
   "version": "1.0.0",
   "homeassistant": "2024.1.0",
   "documentation": "https://github.com/hgn32/daikin_aircleaner",

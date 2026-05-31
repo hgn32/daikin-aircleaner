@@ -180,7 +180,7 @@ class DaikinAircleanerCard extends HTMLElement {
             <ha-icon icon="mdi:air-purifier"></ha-icon>
           </div>
           <div class="info">
-            <div class="name" id="name">Daikin Aircleaner</div>
+            <div class="name" id="name">Daikin Air Cleaner</div>
             <div class="status" id="status">-</div>
           </div>
         </div>
@@ -190,7 +190,7 @@ class DaikinAircleanerCard extends HTMLElement {
         <div class="sheet" id="sheet">
           <div class="sheet-handle"></div>
           <div class="sheet-header">
-            <span class="sheet-title" id="sheet-title">Daikin Aircleaner</span>
+            <span class="sheet-title" id="sheet-title">Daikin Air Cleaner</span>
             <button class="close-btn" id="close">✕</button>
           </div>
 
@@ -260,7 +260,7 @@ class DaikinAircleanerCard extends HTMLElement {
     const mode = fan.attributes.preset_mode || '';
     const airvol = this._state(this._config.airvol_entity);
     const humd   = this._state(this._config.humd_entity);
-    const name   = fan.attributes.friendly_name || 'Daikin Aircleaner';
+    const name   = fan.attributes.friendly_name || 'Daikin Air Cleaner';
 
     this.shadowRoot.getElementById('name').textContent = name;
     this.shadowRoot.getElementById('sheet-title').textContent = name;
@@ -313,6 +313,6 @@ customElements.define('daikin-aircleaner-card', DaikinAircleanerCard);
 window.customCards = window.customCards || [];
 window.customCards.push({
   type:        'daikin-aircleaner-card',
-  name:        'Daikin Aircleaner',
-  description: 'Daikin Aircleaner card with popup controls',
+  name:        'Daikin Air Cleaner',
+  description: 'Daikin Air Cleaner card with popup controls',
 });

@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Daikin Aircleaner",
+        "title": "Daikin Air Cleaner",
         "data": {
           "ip_address": "IP Address",
           "name": "Name"
