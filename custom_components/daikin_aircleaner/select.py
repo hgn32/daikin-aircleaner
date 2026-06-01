@@ -72,6 +72,10 @@ class AirvolSelect(_BaseSelect):
         super().__init__(coordinator, api, entry, "airvol")
 
     @property
+    def available(self) -> bool:
+        return (self.coordinator.data or {}).get("mode") == "0"
+
+    @property
     def current_option(self) -> str | None:
         airvol = (self.coordinator.data or {}).get("airvol")
         return _AIRVOL_TO_LABEL.get(airvol or "", None)
@@ -81,7 +85,7 @@ class AirvolSelect(_BaseSelect):
         if airvol is None:
             _LOGGER.error("Unknown airvol option: %s", option)
             return
-        await self._set({"airvol": airvol, "mode": "0"})
+        await self._set({"airvol": airvol})
 
 
 class HumdSelect(_BaseSelect):
@@ -90,6 +94,10 @@ class HumdSelect(_BaseSelect):
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
         super().__init__(coordinator, api, entry, "humd")
+
+    @property
+    def available(self) -> bool:
+        return (self.coordinator.data or {}).get("mode") == "0"
 
     @property
     def current_option(self) -> str | None:
@@ -101,4 +109,4 @@ class HumdSelect(_BaseSelect):
         if humd is None:
             _LOGGER.error("Unknown humd option: %s", option)
             return
-        await self._set({"humd": humd, "mode": "0"})
+        await self._set({"humd": humd})
