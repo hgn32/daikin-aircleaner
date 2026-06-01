@@ -39,24 +39,25 @@ const CARD_STYLES = `
   }
 `;
 
-const OVERLAY_STYLES = `
-  .daikin-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,.45);
-    z-index: 999999;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-  .daikin-overlay.open { display: flex; }
-  .daikin-sheet {
-    background: var(--card-background-color, #fff);
+const DIALOG_STYLES = `
+  dialog.daikin-dialog {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    margin: 0 auto;
+    max-width: 480px;
+    width: 100%;
+    border: none;
     border-radius: 20px 20px 0 0;
-    padding: 0 20px 24px;
-    width: 100%; max-width: 480px;
+    padding: 0 20px calc(24px + env(safe-area-inset-bottom, 0));
+    background: var(--card-background-color, #fff);
     box-shadow: 0 -4px 24px rgba(0,0,0,.18);
     animation: daikin-slide-up .22s ease;
+  }
+  dialog.daikin-dialog::backdrop {
+    background: rgba(0,0,0,.45);
   }
   @keyframes daikin-slide-up {
     from { transform: translateY(60px); opacity: 0; }
@@ -131,7 +132,7 @@ const OVERLAY_STYLES = `
     border-color: var(--primary-color);
     color: #fff;
   }
-  .daikin-chip:disabled { opacity: 0.35; cursor: default; }
+  .daikin-chip:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
 `;
 
 class DaikinAircleanerCard extends HTMLElement {
@@ -140,7 +141,7 @@ class DaikinAircleanerCard extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._hass = null;
     this._config = null;
-    this._overlay = null;
+    this._dialog = null;
   }
 
   connectedCallback() {
@@ -148,9 +149,9 @@ class DaikinAircleanerCard extends HTMLElement {
   }
 
   disconnectedCallback() {
-    if (this._overlay) {
-      this._overlay.remove();
-      this._overlay = null;
+    if (this._dialog) {
+      this._dialog.remove();
+      this._dialog = null;
     }
   }
 
@@ -165,11 +166,11 @@ class DaikinAircleanerCard extends HTMLElement {
     this._update();
   }
 
-  _ensureOverlayStyles() {
-    if (document.getElementById('daikin-overlay-styles')) return;
+  _ensureDialogStyles() {
+    if (document.getElementById('daikin-dialog-styles')) return;
     const style = document.createElement('style');
-    style.id = 'daikin-overlay-styles';
-    style.textContent = OVERLAY_STYLES;
+    style.id = 'daikin-dialog-styles';
+    style.textContent = DIALOG_STYLES;
     document.head.appendChild(style);
   }
 
@@ -195,43 +196,44 @@ class DaikinAircleanerCard extends HTMLElement {
       this.addEventListener('click', this._clickHandler);
     }
 
-    this._ensureOverlayStyles();
+    this._ensureDialogStyles();
 
-    if (this._overlay) this._overlay.remove();
+    if (this._dialog) {
+      this._dialog.remove();
+      this._dialog = null;
+    }
 
-    const overlay = document.createElement('div');
-    overlay.className = 'daikin-overlay';
-    overlay.innerHTML = `
-      <div class="daikin-sheet">
-        <div class="daikin-handle"></div>
-        <div class="daikin-header">
-          <span class="daikin-title" id="daikin-title">Daikin Air Cleaner</span>
-          <button class="daikin-close" id="daikin-close">✕</button>
-        </div>
-        <div class="daikin-power-row">
-          <span class="daikin-power-label">電源</span>
-          <div class="daikin-toggle" id="daikin-toggle">
-            <div class="daikin-toggle-track" id="daikin-track">
-              <div class="daikin-toggle-thumb"></div>
-            </div>
+    const dialog = document.createElement('dialog');
+    dialog.className = 'daikin-dialog';
+    dialog.innerHTML = `
+      <div class="daikin-handle"></div>
+      <div class="daikin-header">
+        <span class="daikin-title" id="daikin-title">Daikin Air Cleaner</span>
+        <button class="daikin-close" id="daikin-close">✕</button>
+      </div>
+      <div class="daikin-power-row">
+        <span class="daikin-power-label">電源</span>
+        <div class="daikin-toggle" id="daikin-toggle">
+          <div class="daikin-toggle-track" id="daikin-track">
+            <div class="daikin-toggle-thumb"></div>
           </div>
         </div>
-        <div class="daikin-section">
-          <div class="daikin-section-label">モード</div>
-          <div class="daikin-chips" id="daikin-mode-chips"></div>
-        </div>
-        <div class="daikin-section" id="daikin-airvol-section">
-          <div class="daikin-section-label">風量</div>
-          <div class="daikin-chips" id="daikin-airvol-chips"></div>
-        </div>
-        <div class="daikin-section" id="daikin-humd-section">
-          <div class="daikin-section-label">加湿</div>
-          <div class="daikin-chips" id="daikin-humd-chips"></div>
-        </div>
+      </div>
+      <div class="daikin-section">
+        <div class="daikin-section-label">モード</div>
+        <div class="daikin-chips" id="daikin-mode-chips"></div>
+      </div>
+      <div class="daikin-section" id="daikin-airvol-section">
+        <div class="daikin-section-label">風量</div>
+        <div class="daikin-chips" id="daikin-airvol-chips"></div>
+      </div>
+      <div class="daikin-section" id="daikin-humd-section">
+        <div class="daikin-section-label">加湿</div>
+        <div class="daikin-chips" id="daikin-humd-chips"></div>
       </div>
     `;
-    document.body.appendChild(overlay);
-    this._overlay = overlay;
+    document.body.appendChild(dialog);
+    this._dialog = dialog;
 
     this._buildChips('daikin-mode-chips', MODE_LABELS, (v) =>
       this._call('fan', 'set_preset_mode', { preset_mode: v }, this._config.entity));
@@ -240,18 +242,19 @@ class DaikinAircleanerCard extends HTMLElement {
     this._buildChips('daikin-humd-chips', HUMD_LABELS, (v) =>
       this._call('select', 'select_option', { option: v }, this._config.humd_entity));
 
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) this._close();
+    dialog.addEventListener('cancel', () => this._close());
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) this._close();
     });
-    overlay.querySelector('#daikin-close').addEventListener('click', () => this._close());
-    overlay.querySelector('#daikin-toggle').addEventListener('click', () => {
-      const isOn = overlay.querySelector('#daikin-track').classList.contains('on');
+    dialog.querySelector('#daikin-close').addEventListener('click', () => this._close());
+    dialog.querySelector('#daikin-toggle').addEventListener('click', () => {
+      const isOn = dialog.querySelector('#daikin-track').classList.contains('on');
       this._call('fan', isOn ? 'turn_off' : 'turn_on', {}, this._config.entity);
     });
   }
 
   _buildChips(id, labels, onClick) {
-    const wrap = this._overlay.querySelector(`#${id}`);
+    const wrap = this._dialog.querySelector(`#${id}`);
     labels.forEach(label => {
       const btn = document.createElement('button');
       btn.className = 'daikin-chip';
@@ -263,7 +266,7 @@ class DaikinAircleanerCard extends HTMLElement {
   }
 
   _update() {
-    if (!this._hass || !this._config || !this._overlay) return;
+    if (!this._hass || !this._config || !this._dialog) return;
 
     const fan = this._hass.states[this._config.entity];
     if (!fan) return;
@@ -279,8 +282,8 @@ class DaikinAircleanerCard extends HTMLElement {
     this.shadowRoot.getElementById('status').textContent =
       isOn ? [mode, `風量:${airvol}`, `加湿:${humd}`].filter(Boolean).join(' · ') : 'オフ';
 
-    this._overlay.querySelector('#daikin-title').textContent = name;
-    this._overlay.querySelector('#daikin-track').className =
+    this._dialog.querySelector('#daikin-title').textContent = name;
+    this._dialog.querySelector('#daikin-track').className =
       `daikin-toggle-track${isOn ? ' on' : ''}`;
 
     this._setActive('daikin-mode-chips', mode);
@@ -290,8 +293,8 @@ class DaikinAircleanerCard extends HTMLElement {
     const fixedMode = mode !== '手動' && mode !== '';
     this._setDisabled('daikin-airvol-chips', fixedMode);
     this._setDisabled('daikin-humd-chips', fixedMode);
-    this._overlay.querySelector('#daikin-airvol-section').classList.toggle('dimmed', fixedMode);
-    this._overlay.querySelector('#daikin-humd-section').classList.toggle('dimmed', fixedMode);
+    this._dialog.querySelector('#daikin-airvol-section').classList.toggle('dimmed', fixedMode);
+    this._dialog.querySelector('#daikin-humd-section').classList.toggle('dimmed', fixedMode);
   }
 
   _state(entityId) {
@@ -301,17 +304,17 @@ class DaikinAircleanerCard extends HTMLElement {
   }
 
   _setActive(containerId, value) {
-    this._overlay.querySelectorAll(`#${containerId} .daikin-chip`)
+    this._dialog.querySelectorAll(`#${containerId} .daikin-chip`)
       .forEach(c => c.classList.toggle('active', c.dataset.value === value));
   }
 
   _setDisabled(containerId, disabled) {
-    this._overlay.querySelectorAll(`#${containerId} .daikin-chip`)
+    this._dialog.querySelectorAll(`#${containerId} .daikin-chip`)
       .forEach(c => { c.disabled = disabled; });
   }
 
-  _open()  { if (this._overlay) this._overlay.classList.add('open'); }
-  _close() { if (this._overlay) this._overlay.classList.remove('open'); }
+  _open()  { if (this._dialog) this._dialog.showModal(); }
+  _close() { if (this._dialog) this._dialog.close(); }
 
   _call(domain, service, data, entityId) {
     if (!entityId) { console.warn('[daikin-card] entityId not configured', domain, service); return; }
