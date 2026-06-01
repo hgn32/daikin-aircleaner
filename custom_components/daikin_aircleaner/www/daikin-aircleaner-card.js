@@ -209,7 +209,7 @@ class DaikinAircleanerCard extends HTMLElement {
       <div class="daikin-handle"></div>
       <div class="daikin-header">
         <span class="daikin-title" id="daikin-title">Daikin Air Cleaner</span>
-        <button class="daikin-close" id="daikin-close">✕</button>
+        <button type="button" class="daikin-close" id="daikin-close">✕</button>
       </div>
       <div class="daikin-power-row">
         <span class="daikin-power-label">電源</span>
@@ -257,6 +257,7 @@ class DaikinAircleanerCard extends HTMLElement {
     const wrap = this._dialog.querySelector(`#${id}`);
     labels.forEach(label => {
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'daikin-chip';
       btn.textContent = label;
       btn.dataset.value = label;
