@@ -132,7 +132,21 @@ const DIALOG_STYLES = `
     border-color: var(--primary-color);
     color: #fff;
   }
-  .daikin-chip:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+  .daikin-chip:disabled { opacity: 0.35; cursor: default; }
+  .daikin-debug {
+    margin-top: 18px;
+    padding: 10px;
+    border-radius: 8px;
+    background: #111;
+    color: #0f0;
+    font-family: monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+  }
 `;
 
 class DaikinAircleanerCard extends HTMLElement {
@@ -142,6 +156,7 @@ class DaikinAircleanerCard extends HTMLElement {
     this._hass = null;
     this._config = null;
     this._dialog = null;
+    this._logLines = [];
   }
 
   connectedCallback() {
@@ -231,6 +246,7 @@ class DaikinAircleanerCard extends HTMLElement {
         <div class="daikin-section-label">加湿</div>
         <div class="daikin-chips" id="daikin-humd-chips"></div>
       </div>
+      <div class="daikin-debug" id="daikin-debug">debug</div>
     `;
     document.body.appendChild(dialog);
     this._dialog = dialog;
@@ -261,11 +277,7 @@ class DaikinAircleanerCard extends HTMLElement {
       btn.className = 'daikin-chip';
       btn.textContent = label;
       btn.dataset.value = label;
-      btn.addEventListener('click', () => {
-        btn.style.background = 'red';
-        setTimeout(() => { btn.style.background = ''; }, 600);
-        onClick(label);
-      });
+      btn.addEventListener('click', () => onClick(label));
       wrap.appendChild(btn);
     });
   }
@@ -295,11 +307,30 @@ class DaikinAircleanerCard extends HTMLElement {
     this._setActive('daikin-airvol-chips', airvol);
     this._setActive('daikin-humd-chips', humd);
 
-    const fixedMode = mode !== '手動' && mode !== '';
-    this._setDisabled('daikin-airvol-chips', fixedMode);
-    this._setDisabled('daikin-humd-chips', fixedMode);
-    this._dialog.querySelector('#daikin-airvol-section').classList.toggle('dimmed', fixedMode);
-    this._dialog.querySelector('#daikin-humd-section').classList.toggle('dimmed', fixedMode);
+    // NOTE: 手動以外でも操作できるよう、いったん無効化は外す（原因切り分けのため）
+    this._renderDebug();
+  }
+
+  _renderDebug() {
+    const box = this._dialog.querySelector('#daikin-debug');
+    if (!box) return;
+    const av = this._config.airvol_entity;
+    const hd = this._config.humd_entity;
+    const head = [
+      `config.entity       = ${this._config.entity || '(未設定)'}`,
+      `config.airvol_entity= ${av || '(未設定)'} ${av ? (this._hass.states[av] ? '[存在]' : '[HAに無し!]') : ''}`,
+      `config.humd_entity  = ${hd || '(未設定)'} ${hd ? (this._hass.states[hd] ? '[存在]' : '[HAに無し!]') : ''}`,
+      `hass = ${this._hass ? 'OK' : 'null'}`,
+      '--- クリックログ ---',
+    ].join('\n');
+    box.textContent = head + '\n' + (this._logLines.join('\n') || '(まだクリックなし)');
+  }
+
+  _log(line) {
+    const t = new Date().toLocaleTimeString();
+    this._logLines.unshift(`${t}  ${line}`);
+    this._logLines = this._logLines.slice(0, 8);
+    this._renderDebug();
   }
 
   _state(entityId) {
@@ -313,18 +344,23 @@ class DaikinAircleanerCard extends HTMLElement {
       .forEach(c => c.classList.toggle('active', c.dataset.value === value));
   }
 
-  _setDisabled(containerId, disabled) {
-    this._dialog.querySelectorAll(`#${containerId} .daikin-chip`)
-      .forEach(c => { c.disabled = disabled; });
-  }
-
   _open()  { if (this._dialog) this._dialog.showModal(); }
   _close() { if (this._dialog) this._dialog.close(); }
 
-  _call(domain, service, data, entityId) {
-    if (!entityId) { console.warn('[daikin-card] entityId not configured', domain, service); return; }
-    if (!this._hass) { console.warn('[daikin-card] hass not available'); return; }
-    this._hass.callService(domain, service, { entity_id: entityId, ...data });
+  async _call(domain, service, data, entityId) {
+    const desc = `${domain}.${service} entity=${entityId || '(未設定)'} ${JSON.stringify(data)}`;
+    if (!entityId) { this._log('NG entityId未設定: ' + desc); return; }
+    if (!this._hass) { this._log('NG hass無し'); return; }
+    this._log('送信→ ' + desc);
+    try {
+      await this._hass.callService(domain, service, { entity_id: entityId, ...data });
+      this._log('OK ' + desc);
+    } catch (err) {
+      const msg = err && err.message ? err.message
+                : err && err.error   ? err.error
+                : JSON.stringify(err);
+      this._log('エラー ' + msg);
+    }
   }
 
   getCardSize() { return 1; }
