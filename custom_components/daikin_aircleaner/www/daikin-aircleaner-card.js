@@ -260,7 +260,11 @@ class DaikinAircleanerCard extends HTMLElement {
       btn.className = 'daikin-chip';
       btn.textContent = label;
       btn.dataset.value = label;
-      btn.addEventListener('click', () => onClick(label));
+      btn.addEventListener('click', () => {
+        btn.style.background = 'red';
+        setTimeout(() => { btn.style.background = ''; }, 600);
+        onClick(label);
+      });
       wrap.appendChild(btn);
     });
   }
