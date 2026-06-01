@@ -4,7 +4,7 @@ import logging
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -12,16 +12,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-
-_MODE_TO_LABEL = {
-    "0": "手動",
-    "1": "おまかせ",
-    "2": "節電",
-    "3": "花粉",
-    "4": "のど/はだ",
-    "5": "サーキュ",
-}
-_LABEL_TO_MODE = {v: k for k, v in _MODE_TO_LABEL.items()}
 
 
 async def async_setup_entry(
@@ -36,11 +26,7 @@ async def async_setup_entry(
 class Aircleaner(CoordinatorEntity, FanEntity):
     _attr_has_entity_name = True
     _attr_name = None
-    _attr_supported_features = (
-        FanEntityFeature.PRESET_MODE | FanEntityFeature.TURN_OFF | FanEntityFeature.TURN_ON
-    )
-    _attr_preset_modes = list(_MODE_TO_LABEL.values())
-    _attr_preset_mode: str | None = None
+    _attr_supported_features = FanEntityFeature.TURN_OFF | FanEntityFeature.TURN_ON
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
@@ -67,22 +53,6 @@ class Aircleaner(CoordinatorEntity, FanEntity):
 
     async def async_turn_off(self, **kwargs) -> None:
         await self._set({"pow": "0"})
-
-    async def async_set_preset_mode(self, preset_mode: str) -> None:
-        mode = _LABEL_TO_MODE.get(preset_mode)
-        if mode is None:
-            _LOGGER.error("Unknown preset mode: %s", preset_mode)
-            return
-        patch: dict = {"pow": "1", "mode": mode}
-        if mode in ("1", "4"):  # おまかせ / のど/はだ は固定値
-            patch.update({"airvol": "0", "humd": "4"})
-        await self._set(patch)
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        data = self.coordinator.data or {}
-        self._attr_preset_mode = _MODE_TO_LABEL.get(data.get("mode", ""))
-        super()._handle_coordinator_update()
 
     def _current_params(self) -> dict:
         d = self.coordinator.data or {}

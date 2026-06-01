@@ -4,7 +4,7 @@ import logging
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -19,6 +19,18 @@ _LABEL_TO_AIRVOL = {v: k for k, v in _AIRVOL_TO_LABEL.items()}
 _HUMD_TO_LABEL = {"0": "無", "1": "弱", "2": "標準", "3": "高"}
 _LABEL_TO_HUMD = {v: k for k, v in _HUMD_TO_LABEL.items()}
 
+_MODE_TO_LABEL = {
+    "0": "手動",
+    "1": "おまかせ",
+    "2": "節電",
+    "3": "花粉",
+    "4": "のど/はだ",
+    "5": "サーキュ",
+}
+_LABEL_TO_MODE = {v: k for k, v in _MODE_TO_LABEL.items()}
+_VALID_AIRVOL = set(_AIRVOL_TO_LABEL.keys())  # {"0","1","2","3","5"}
+_VALID_HUMD = set(_HUMD_TO_LABEL.keys())      # {"0","1","2","3"}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -27,6 +39,7 @@ async def async_setup_entry(
 ) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([
+        ModeSelect(data["coordinator"], data["api"], entry),
         AirvolSelect(data["coordinator"], data["api"], entry),
         HumdSelect(data["coordinator"], data["api"], entry),
     ])
@@ -64,12 +77,48 @@ class _BaseSelect(CoordinatorEntity, SelectEntity):
             _LOGGER.error("Failed to set data: %s, response: %s", data, response)
 
 
+class ModeSelect(_BaseSelect):
+    _attr_translation_key = "mode"
+    _attr_options = list(_MODE_TO_LABEL.values())
+
+    def __init__(self, coordinator, api, entry):
+        super().__init__(coordinator, api, entry, "mode")
+
+    @property
+    def current_option(self):
+        mode = (self.coordinator.data or {}).get("mode")
+        return _MODE_TO_LABEL.get(mode or "", None)
+
+    async def async_select_option(self, option: str):
+        mode = _LABEL_TO_MODE.get(option)
+        if mode is None:
+            _LOGGER.error("Unknown mode option: %s", option)
+            return
+        patch: dict = {"pow": "1", "mode": mode}
+        if mode in ("1", "4"):   # おまかせ / のど/はだ: fixed params
+            patch.update({"airvol": "0", "humd": "4"})
+        elif mode == "0":        # 手動: restore last valid values
+            d = self.coordinator.data or {}
+            airvol = d.get("airvol", "0")
+            humd   = d.get("humd", "0")
+            if airvol not in _VALID_AIRVOL:
+                airvol = "0"
+            if humd not in _VALID_HUMD:
+                humd = "0"
+            patch.update({"airvol": airvol, "humd": humd})
+        await self._set(patch)
+
+
 class AirvolSelect(_BaseSelect):
     _attr_translation_key = "airvol"
     _attr_options = list(_AIRVOL_TO_LABEL.values())
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
         super().__init__(coordinator, api, entry, "airvol")
+
+    @property
+    def available(self) -> bool:
+        return (self.coordinator.data or {}).get("mode") == "0"
 
     @property
     def current_option(self) -> str | None:
@@ -90,6 +139,10 @@ class HumdSelect(_BaseSelect):
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
         super().__init__(coordinator, api, entry, "humd")
+
+    @property
+    def available(self) -> bool:
+        return (self.coordinator.data or {}).get("mode") == "0"
 
     @property
     def current_option(self) -> str | None:

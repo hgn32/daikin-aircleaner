@@ -18,6 +18,7 @@
   },
   "entity": {
     "select": {
+      "mode": { "name": "モード" },
       "airvol": {
         "name": "風量"
       },
