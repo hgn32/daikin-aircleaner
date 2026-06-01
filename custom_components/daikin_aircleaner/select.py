@@ -81,7 +81,7 @@ class AirvolSelect(_BaseSelect):
         if airvol is None:
             _LOGGER.error("Unknown airvol option: %s", option)
             return
-        await self._set({"airvol": airvol})
+        await self._set({"airvol": airvol, "mode": "0"})
 
 
 class HumdSelect(_BaseSelect):
@@ -101,4 +101,4 @@ class HumdSelect(_BaseSelect):
         if humd is None:
             _LOGGER.error("Unknown humd option: %s", option)
             return
-        await self._set({"humd": humd})
+        await self._set({"humd": humd, "mode": "0"})
