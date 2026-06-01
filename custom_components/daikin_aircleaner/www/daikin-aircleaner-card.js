@@ -226,7 +226,7 @@ class DaikinAircleanerCard extends HTMLElement {
     `;
 
     this._buildChips('mode-chips', MODE_LABELS, (v) =>
-      this._call('select', 'select_option', { option: v }, this._config.mode_entity));
+      this._call('fan', 'set_preset_mode', { preset_mode: v }, this._config.entity));
     this._buildChips('airvol-chips', AIRVOL_LABELS, (v) =>
       this._call('select', 'select_option', { option: v }, this._config.airvol_entity));
     this._buildChips('humd-chips', HUMD_LABELS, (v) =>
@@ -262,7 +262,7 @@ class DaikinAircleanerCard extends HTMLElement {
     if (!fan) return;
 
     const isOn = fan.state === 'on';
-    const mode = this._state(this._config.mode_entity);
+    const mode = fan.attributes.preset_mode || '';
     const airvol = this._state(this._config.airvol_entity);
     const humd   = this._state(this._config.humd_entity);
     const name   = fan.attributes.friendly_name || 'Daikin Air Cleaner';
@@ -320,7 +320,6 @@ class DaikinAircleanerCard extends HTMLElement {
   static getStubConfig() {
     return {
       entity: 'fan.aircleaner',
-      mode_entity:   'select.aircleaner_mode',
       airvol_entity: 'select.aircleaner_airvol',
       humd_entity:   'select.aircleaner_humd',
     };

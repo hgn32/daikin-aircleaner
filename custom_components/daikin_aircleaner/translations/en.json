@@ -18,7 +18,6 @@
   },
   "entity": {
     "select": {
-      "mode": { "name": "Mode" },
       "airvol": {
         "name": "Fan Speed"
       },
