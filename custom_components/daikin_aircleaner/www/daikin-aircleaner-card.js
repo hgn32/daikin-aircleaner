@@ -186,7 +186,10 @@ class DaikinAircleanerCard extends HTMLElement {
       </ha-card>
     `;
 
-    root.querySelector('ha-card').addEventListener('click', () => this._open());
+    if (!this._clickHandler) {
+      this._clickHandler = () => this._open();
+      this.addEventListener('click', this._clickHandler);
+    }
 
     this._ensureOverlayStyles();
 
@@ -303,8 +306,8 @@ class DaikinAircleanerCard extends HTMLElement {
       .forEach(c => { c.disabled = disabled; });
   }
 
-  _open()  { this._overlay.classList.add('open'); }
-  _close() { this._overlay.classList.remove('open'); }
+  _open()  { if (this._overlay) this._overlay.classList.add('open'); }
+  _close() { if (this._overlay) this._overlay.classList.remove('open'); }
 
   _call(domain, service, data, entityId) {
     if (!entityId || !this._hass) return;
