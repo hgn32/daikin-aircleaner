@@ -143,6 +143,10 @@ class DaikinAircleanerCard extends HTMLElement {
     this._overlay = null;
   }
 
+  connectedCallback() {
+    if (this._config) this._build();
+  }
+
   disconnectedCallback() {
     if (this._overlay) {
       this._overlay.remove();
