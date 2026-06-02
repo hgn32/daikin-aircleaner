@@ -23,7 +23,7 @@ _HUMD_VALUES   = {"無": "0", "弱": "1", "標準": "2", "高": "3"}
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.FAN, Platform.BINARY_SENSOR, Platform.SELECT]
+PLATFORMS = [Platform.FAN, Platform.BINARY_SENSOR, Platform.SELECT, Platform.SENSOR]
 
 _WWW_DIR = Path(__file__).parent / "www"
 
@@ -127,6 +127,21 @@ class CleanerAPI:
         self._session = session
         self._timeout = aiohttp.ClientTimeout(total=5)
 
+    async def _request_path(self, path: str, params: dict | None = None) -> str:
+        url = f"http://{self._address}{path}"
+        last_err: Exception
+        for i, delay in enumerate((0, *_RETRY_DELAYS)):
+            if delay:
+                await asyncio.sleep(delay)
+            try:
+                async with self._session.get(url, params=params, timeout=self._timeout) as resp:
+                    resp.raise_for_status()
+                    return await resp.text()
+            except Exception as err:
+                last_err = err
+                _LOGGER.debug("Request %s attempt %d failed: %s", path, i + 1, err)
+        raise last_err
+
     async def _request(self, path: str, params: dict | None = None) -> str:
         url = f"http://{self._address}/cleaner/{path}"
         last_err: Exception
@@ -142,9 +157,22 @@ class CleanerAPI:
                 _LOGGER.debug("Request %s attempt %d failed: %s", path, i + 1, err)
         raise last_err
 
+    async def get_mac(self) -> str | None:
+        try:
+            text = await self._request_path("/common/basic_info")
+            for pair in text.split(","):
+                if "=" not in pair:
+                    continue
+                key, val = pair.split("=", 1)
+                if key == "mac":
+                    return val.strip()
+        except Exception as err:
+            _LOGGER.error("Failed to fetch basic_info: %s", err)
+        return None
+
     async def get(self) -> dict:
         response: dict = {}
-        for ep in ("get_control_info", "get_unit_status"):
+        for ep in ("get_control_info", "get_unit_status", "get_sensor_info"):
             try:
                 text = await self._request(ep)
             except Exception as err:

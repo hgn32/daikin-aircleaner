@@ -10,7 +10,8 @@
 ## 機能
 
 - **ファンエンティティ**: 電源のオン/オフ、運転モードの切り替え
-- **セレクトエンティティ**: 風量・加湿レベルの個別制御
+- **セレクトエンティティ**: 風量・加湿レベルの個別制御（制御画面用）
+- **センサーエンティティ**: 室温・室内湿度・PM2.5・ほこり・におい
 - **バイナリセンサー**: 給水タンクの満水検知
 - **カスタムカード**: タップで開くボトムシートダイアログ
 
@@ -19,11 +20,24 @@
 | モード | 説明 |
 |--------|------|
 | おまかせ | 自動で最適運転 |
+| 風量自動 | 風量自動、加湿手動設定 |
 | 手動 | 風量・加湿を手動設定 |
 | 節電 | 省エネ運転 |
 | 花粉 | 花粉対策運転 |
 | のど/はだ | 肌・のどうるおい運転 |
 | サーキュ | サーキュレーション運転 |
+
+### 使用API
+
+| エンドポイント | 用途 |
+|---|---|
+| `GET /common/basic_info` | MACアドレス取得（デバイスID生成） |
+| `GET /cleaner/get_control_info` | 運転状態取得 |
+| `GET /cleaner/get_unit_status` | ユニット状態取得 |
+| `GET /cleaner/get_sensor_info` | センサー値取得（室温・湿度・PM2.5等） |
+| `GET /cleaner/set_control_info` | 運転設定変更 |
+
+参考: [nasshu2916/DAIKIN-API](https://github.com/nasshu2916/DAIKIN-API), [akiraseto/daikinCleaner](https://github.com/akiraseto/daikinCleaner)
 
 ## インストール
 
@@ -43,7 +57,7 @@
 
 1. 「設定」→「デバイスとサービス」→「統合を追加」
 2. 「Daikin Air Cleaner」を検索して選択
-3. IPアドレスと名前を入力
+3. IPアドレスと名前を入力（MACアドレスを自動取得してデバイスIDとして使用）
 
 ## カスタムカード
 
@@ -60,8 +74,6 @@ resources:
 ```yaml
 type: custom:daikin-aircleaner-card
 entity: fan.living_air_cleaner
-airvol_entity: select.living_air_cleaner_airvol
-humd_entity: select.living_air_cleaner_humd
 ```
 
 ## ライセンス
