@@ -50,7 +50,7 @@ class _BaseSensor(CoordinatorEntity, SensorEntity):
 
 
 class TemperatureSensor(_BaseSensor):
-    _attr_name = "室温"
+    _attr_translation_key = "temperature"
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
@@ -67,7 +67,7 @@ class TemperatureSensor(_BaseSensor):
 
 
 class HumiditySensor(_BaseSensor):
-    _attr_name = "室内湿度"
+    _attr_translation_key = "indoor_humidity"
     _attr_device_class = SensorDeviceClass.HUMIDITY
     _attr_native_unit_of_measurement = PERCENTAGE
 
@@ -101,7 +101,7 @@ class PM25Sensor(_BaseSensor):
 
 
 class DustSensor(_BaseSensor):
-    _attr_name = "ほこり"
+    _attr_translation_key = "dust"
     _attr_native_unit_of_measurement = "μg/m³"
 
     def __init__(self, coordinator, entry: ConfigEntry) -> None:
@@ -117,7 +117,7 @@ class DustSensor(_BaseSensor):
 
 
 class OdorSensor(_BaseSensor):
-    _attr_name = "におい"
+    _attr_translation_key = "odor"
 
     def __init__(self, coordinator, entry: ConfigEntry) -> None:
         super().__init__(coordinator, entry, "odor")

@@ -17,6 +17,12 @@
     }
   },
   "entity": {
+    "sensor": {
+      "temperature":    { "name": "室温" },
+      "indoor_humidity":{ "name": "室内湿度" },
+      "dust":           { "name": "ほこり" },
+      "odor":           { "name": "におい" }
+    },
     "select": {
       "fan_speed": {
         "name": "風量"
