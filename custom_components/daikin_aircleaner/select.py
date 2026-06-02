@@ -72,6 +72,10 @@ class AirvolSelect(_BaseSelect):
         super().__init__(coordinator, api, entry, "airvol")
 
     @property
+    def available(self) -> bool:
+        return True
+
+    @property
     def current_option(self) -> str | None:
         airvol = (self.coordinator.data or {}).get("airvol")
         return _AIRVOL_TO_LABEL.get(airvol or "", None)
@@ -90,6 +94,10 @@ class HumdSelect(_BaseSelect):
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
         super().__init__(coordinator, api, entry, "humd")
+
+    @property
+    def available(self) -> bool:
+        return True
 
     @property
     def current_option(self) -> str | None:
