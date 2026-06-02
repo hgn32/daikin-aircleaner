@@ -73,7 +73,8 @@ class AirvolSelect(_BaseSelect):
 
     @property
     def available(self) -> bool:
-        return True
+        d = self.coordinator.data or {}
+        return d.get("mode") == "0" and d.get("airvol", "0") != "0"
 
     @property
     def current_option(self) -> str | None:
@@ -97,7 +98,7 @@ class HumdSelect(_BaseSelect):
 
     @property
     def available(self) -> bool:
-        return True
+        return (self.coordinator.data or {}).get("mode") == "0"
 
     @property
     def current_option(self) -> str | None:

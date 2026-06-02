@@ -319,9 +319,14 @@ class DaikinAircleanerCard extends HTMLElement {
   _close() { if (this._dialog) this._dialog.close(); }
 
   _call(domain, service, data, entityId) {
-    if (!entityId) { console.warn('[daikin-card] entityId not configured', domain, service); return; }
-    if (!this._hass) { console.warn('[daikin-card] hass not available'); return; }
-    this._hass.callService(domain, service, { entity_id: entityId, ...data });
+    console.log('[daikin] _call', domain, service, entityId, data);
+    if (!entityId) { console.error('[daikin] entityId未設定', domain, service); return; }
+    if (!this._hass) { console.error('[daikin] hass未設定'); return; }
+    const state = this._hass.states[entityId];
+    console.log('[daikin] entity state:', state ? state.state : 'NOT FOUND', 'attributes:', state ? JSON.stringify(state.attributes) : 'N/A');
+    this._hass.callService(domain, service, { entity_id: entityId, ...data })
+      .then(() => console.log('[daikin] callService OK', domain, service))
+      .catch(e => console.error('[daikin] callService ERROR', domain, service, e));
   }
 
   getCardSize() { return 1; }
