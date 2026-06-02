@@ -13,7 +13,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-_AIRVOL_TO_LABEL = {"0": "自動", "1": "弱", "2": "標準", "3": "高", "5": "最高"}
+_AIRVOL_TO_LABEL = {"1": "弱", "2": "標準", "3": "高", "5": "最高"}
 _LABEL_TO_AIRVOL = {v: k for k, v in _AIRVOL_TO_LABEL.items()}
 
 _HUMD_TO_LABEL = {"0": "無", "1": "弱", "2": "標準", "3": "高"}

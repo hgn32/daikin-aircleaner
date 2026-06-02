@@ -1,5 +1,5 @@
-const MODE_LABELS   = ['おまかせ', '手動', '節電', '花粉', 'のど/はだ', 'サーキュ'];
-const AIRVOL_LABELS = ['自動', '弱', '標準', '高', '最高'];
+const MODE_LABELS   = ['おまかせ', '風量自動', '手動', '節電', '花粉', 'のど/はだ', 'サーキュ'];
+const AIRVOL_LABELS = ['弱', '標準', '高', '最高'];
 const HUMD_LABELS   = ['無', '弱', '標準', '高'];
 
 const CARD_STYLES = `
@@ -281,7 +281,7 @@ class DaikinAircleanerCard extends HTMLElement {
     this.shadowRoot.getElementById('name').textContent = name;
     this.shadowRoot.getElementById('icon').className = `icon-wrap${isOn ? '' : ' off'}`;
     this.shadowRoot.getElementById('status').textContent =
-      isOn ? [mode, `風量:${airvol}`, `加湿:${humd}`].filter(Boolean).join(' · ') : 'オフ';
+      isOn ? [mode, mode === '手動' ? `風量:${airvol}` : null, `加湿:${humd}`].filter(Boolean).join(' · ') : 'オフ';
 
     this._dialog.querySelector('#daikin-title').textContent = name;
     this._dialog.querySelector('#daikin-track').className =
@@ -291,11 +291,12 @@ class DaikinAircleanerCard extends HTMLElement {
     this._setActive('daikin-airvol-chips', airvol);
     this._setActive('daikin-humd-chips', humd);
 
-    const fixedMode = mode !== '手動' && mode !== '';
-    this._setDisabled('daikin-airvol-chips', fixedMode);
-    this._setDisabled('daikin-humd-chips', fixedMode);
-    this._dialog.querySelector('#daikin-airvol-section').classList.toggle('dimmed', fixedMode);
-    this._dialog.querySelector('#daikin-humd-section').classList.toggle('dimmed', fixedMode);
+    const airvolDisabled = mode !== '手動';
+    const humdDisabled   = mode !== '手動' && mode !== '風量自動';
+    this._setDisabled('daikin-airvol-chips', airvolDisabled);
+    this._setDisabled('daikin-humd-chips', humdDisabled);
+    this._dialog.querySelector('#daikin-airvol-section').classList.toggle('dimmed', airvolDisabled);
+    this._dialog.querySelector('#daikin-humd-section').classList.toggle('dimmed', humdDisabled);
   }
 
   _state(entityId) {

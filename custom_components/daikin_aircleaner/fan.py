@@ -14,7 +14,6 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 _MODE_TO_LABEL = {
-    "0": "手動",
     "1": "おまかせ",
     "2": "節電",
     "3": "花粉",
@@ -23,8 +22,10 @@ _MODE_TO_LABEL = {
 }
 _LABEL_TO_MODE = {v: k for k, v in _MODE_TO_LABEL.items()}
 
-_VALID_AIRVOL = {"0", "1", "2", "3", "5"}
+_VALID_AIRVOL = {"1", "2", "3", "5"}
 _VALID_HUMD = {"0", "1", "2", "3"}
+
+_PRESET_MODES = ["おまかせ", "風量自動", "手動", "節電", "花粉", "のど/はだ", "サーキュ"]
 
 
 async def async_setup_entry(
@@ -42,7 +43,7 @@ class Aircleaner(CoordinatorEntity, FanEntity):
     _attr_supported_features = (
         FanEntityFeature.TURN_OFF | FanEntityFeature.TURN_ON | FanEntityFeature.PRESET_MODE
     )
-    _attr_preset_modes = list(_MODE_TO_LABEL.values())
+    _attr_preset_modes = _PRESET_MODES
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
         super().__init__(coordinator)
@@ -61,7 +62,11 @@ class Aircleaner(CoordinatorEntity, FanEntity):
 
     @property
     def preset_mode(self) -> str | None:
-        mode = (self.coordinator.data or {}).get("mode")
+        d = self.coordinator.data or {}
+        mode = d.get("mode")
+        if mode == "0":
+            airvol = d.get("airvol", "0")
+            return "風量自動" if airvol == "0" else "手動"
         return _MODE_TO_LABEL.get(mode or "", None)
 
     async def async_turn_on(
@@ -83,23 +88,24 @@ class Aircleaner(CoordinatorEntity, FanEntity):
         await self._apply_mode(preset_mode, base={"pow": "1"})
 
     async def _apply_mode(self, preset_mode: str, base: dict) -> None:
+        if preset_mode == "風量自動":
+            await self._set({**base, "mode": "0", "airvol": "0"})
+            return
+        if preset_mode == "手動":
+            d = self.coordinator.data or {}
+            airvol = d.get("airvol", "1")
+            if airvol not in _VALID_AIRVOL:
+                airvol = "1"
+            humd = d.get("humd", "0")
+            if humd not in _VALID_HUMD:
+                humd = "0"
+            await self._set({**base, "mode": "0", "airvol": airvol, "humd": humd})
+            return
         mode = _LABEL_TO_MODE.get(preset_mode)
         if mode is None:
             _LOGGER.error("Unknown preset mode: %s", preset_mode)
             return
-        patch = {**base, "mode": mode}
-        if mode in ("1", "4"):
-            patch.update({"airvol": "0", "humd": "4"})
-        elif mode == "0":
-            d = self.coordinator.data or {}
-            airvol = d.get("airvol", "0")
-            humd = d.get("humd", "0")
-            if airvol not in _VALID_AIRVOL:
-                airvol = "0"
-            if humd not in _VALID_HUMD:
-                humd = "0"
-            patch.update({"airvol": airvol, "humd": humd})
-        await self._set(patch)
+        await self._set({**base, "mode": mode})
 
     def _current_params(self) -> dict:
         d = self.coordinator.data or {}
