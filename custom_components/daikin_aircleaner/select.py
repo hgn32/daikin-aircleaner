@@ -65,7 +65,7 @@ class _BaseSelect(CoordinatorEntity, SelectEntity):
 
 
 class AirvolSelect(_BaseSelect):
-    _attr_translation_key = "airvol"
+    _attr_translation_key = "fan_speed"
     _attr_options = list(_AIRVOL_TO_LABEL.values())
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
@@ -90,7 +90,7 @@ class AirvolSelect(_BaseSelect):
 
 
 class HumdSelect(_BaseSelect):
-    _attr_translation_key = "humd"
+    _attr_translation_key = "humidity"
     _attr_options = list(_HUMD_TO_LABEL.values())
 
     def __init__(self, coordinator, api, entry: ConfigEntry) -> None:

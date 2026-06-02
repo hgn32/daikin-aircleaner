@@ -238,9 +238,9 @@ class DaikinAircleanerCard extends HTMLElement {
     this._buildChips('daikin-mode-chips', MODE_LABELS, (v) =>
       this._call('fan', 'set_preset_mode', { preset_mode: v }, this._config.entity));
     this._buildChips('daikin-airvol-chips', AIRVOL_LABELS, (v) =>
-      this._call('select', 'select_option', { option: v }, this._config.airvol_entity));
+      this._callService('daikin_aircleaner', 'set_airvol', { airvol: v }));
     this._buildChips('daikin-humd-chips', HUMD_LABELS, (v) =>
-      this._call('select', 'select_option', { option: v }, this._config.humd_entity));
+      this._callService('daikin_aircleaner', 'set_humd', { humd: v }));
 
     dialog.addEventListener('cancel', () => this._close());
     dialog.addEventListener('click', (e) => {
@@ -274,8 +274,8 @@ class DaikinAircleanerCard extends HTMLElement {
 
     const isOn = fan.state === 'on';
     const mode = fan.attributes.preset_mode || '';
-    const airvol = this._state(this._config.airvol_entity);
-    const humd   = this._state(this._config.humd_entity);
+    const airvol = fan.attributes.airvol || '';
+    const humd   = fan.attributes.humd   || '';
     const name   = fan.attributes.friendly_name || 'Daikin Air Cleaner';
 
     this.shadowRoot.getElementById('name').textContent = name;
@@ -299,12 +299,6 @@ class DaikinAircleanerCard extends HTMLElement {
     this._dialog.querySelector('#daikin-humd-section').classList.toggle('dimmed', humdDisabled);
   }
 
-  _state(entityId) {
-    return entityId && this._hass.states[entityId]
-      ? this._hass.states[entityId].state
-      : '';
-  }
-
   _setActive(containerId, value) {
     this._dialog.querySelectorAll(`#${containerId} .daikin-chip`)
       .forEach(c => c.classList.toggle('active', c.dataset.value === value));
@@ -319,24 +313,21 @@ class DaikinAircleanerCard extends HTMLElement {
   _close() { if (this._dialog) this._dialog.close(); }
 
   _call(domain, service, data, entityId) {
-    console.log('[daikin] _call', domain, service, entityId, data);
-    if (!entityId) { console.error('[daikin] entityId未設定', domain, service); return; }
-    if (!this._hass) { console.error('[daikin] hass未設定'); return; }
-    const state = this._hass.states[entityId];
-    console.log('[daikin] entity state:', state ? state.state : 'NOT FOUND', 'attributes:', state ? JSON.stringify(state.attributes) : 'N/A');
+    if (!entityId || !this._hass) return;
     this._hass.callService(domain, service, { entity_id: entityId, ...data })
-      .then(() => console.log('[daikin] callService OK', domain, service))
+      .catch(e => console.error('[daikin] callService ERROR', domain, service, e));
+  }
+
+  _callService(domain, service, data) {
+    if (!this._hass) return;
+    this._hass.callService(domain, service, data)
       .catch(e => console.error('[daikin] callService ERROR', domain, service, e));
   }
 
   getCardSize() { return 1; }
 
   static getStubConfig() {
-    return {
-      entity: 'fan.aircleaner',
-      airvol_entity: 'select.aircleaner_airvol',
-      humd_entity:   'select.aircleaner_humd',
-    };
+    return { entity: 'fan.aircleaner' };
   }
 }
 

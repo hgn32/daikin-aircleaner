@@ -18,10 +18,10 @@
   },
   "entity": {
     "select": {
-      "airvol": {
+      "fan_speed": {
         "name": "風量"
       },
-      "humd": {
+      "humidity": {
         "name": "加湿"
       }
     }
