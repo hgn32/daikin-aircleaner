@@ -135,11 +135,8 @@ class LedSelect(_BaseSelect):
         if val is None:
             _LOGGER.error("Unknown led option: %s", option)
             return
-        d = self.coordinator.data or {}
-        device_params = {k: d[k] for k in ("led_dsp", "d_sns", "c_lock", "streamer", "act_ion", "buzzer", "turbo", "eco_moni") if k in d}
-        device_params["led_dsp"] = val
-        response = await self._api.set_device_setting(device_params)
+        response = await self._api.set_device_setting({"led_dsp": val})
         if response and "ret=OK" in response:
             await self.coordinator.async_request_refresh()
         else:
-            _LOGGER.error("Failed to set led: %s, response: %s", device_params, response)
+            _LOGGER.error("Failed to set led: led_dsp=%s, response: %s", val, response)
