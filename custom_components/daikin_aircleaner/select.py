@@ -19,7 +19,7 @@ _LABEL_TO_AIRVOL = {v: k for k, v in _AIRVOL_TO_LABEL.items()}
 _HUMD_TO_LABEL = {"0": "無", "1": "弱", "2": "標準", "3": "高"}
 _LABEL_TO_HUMD = {v: k for k, v in _HUMD_TO_LABEL.items()}
 
-_LED_TO_LABEL = {"0": "Bright", "1": "Dim", "2": "Off"}
+_LED_TO_LABEL = {"0": "点灯", "1": "暗め", "2": "消灯"}
 _LABEL_TO_LED = {v: k for k, v in _LED_TO_LABEL.items()}
 
 
