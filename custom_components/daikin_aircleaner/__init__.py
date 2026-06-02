@@ -6,15 +6,20 @@ import urllib.parse
 from pathlib import Path
 
 import aiohttp
+import voluptuous as vol
 
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import CONF_IP_ADDRESS, DEFAULT_UPDATE_INTERVAL, DOMAIN
+
+_AIRVOL_VALUES = {"弱": "1", "標準": "2", "高": "3", "最高": "5"}
+_HUMD_VALUES   = {"無": "0", "弱": "1", "標準": "2", "高": "3"}
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,7 +64,54 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "coordinator": coordinator,
     }
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    if not hass.services.has_service(DOMAIN, "set_airvol"):
+        async def handle_set_airvol(call: ServiceCall) -> None:
+            label = call.data["airvol"]
+            val = _AIRVOL_VALUES.get(label)
+            if val is None:
+                _LOGGER.error("Unknown airvol: %s", label)
+                return
+            for entry_data in hass.data[DOMAIN].values():
+                await entry_data["api"].set({
+                    **_current_params(entry_data["coordinator"]),
+                    "airvol": val,
+                })
+                await entry_data["coordinator"].async_request_refresh()
+
+        async def handle_set_humd(call: ServiceCall) -> None:
+            label = call.data["humd"]
+            val = _HUMD_VALUES.get(label)
+            if val is None:
+                _LOGGER.error("Unknown humd: %s", label)
+                return
+            for entry_data in hass.data[DOMAIN].values():
+                await entry_data["api"].set({
+                    **_current_params(entry_data["coordinator"]),
+                    "humd": val,
+                })
+                await entry_data["coordinator"].async_request_refresh()
+
+        hass.services.async_register(
+            DOMAIN, "set_airvol", handle_set_airvol,
+            schema=vol.Schema({vol.Required("airvol"): cv.string}),
+        )
+        hass.services.async_register(
+            DOMAIN, "set_humd", handle_set_humd,
+            schema=vol.Schema({vol.Required("humd"): cv.string}),
+        )
+
     return True
+
+
+def _current_params(coordinator) -> dict:
+    d = coordinator.data or {}
+    return {
+        "pow":    d.get("pow", "1"),
+        "mode":   d.get("mode", "0"),
+        "airvol": d.get("airvol", "0"),
+        "humd":   d.get("humd", "0"),
+    }
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

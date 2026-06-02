@@ -2,12 +2,9 @@ from __future__ import annotations
 
 import logging
 
-import voluptuous as vol
-
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.helpers import config_validation as cv
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -30,9 +27,6 @@ _VALID_HUMD = {"0", "1", "2", "3"}
 
 _PRESET_MODES = ["おまかせ", "風量自動", "手動", "節電", "花粉", "のど/はだ", "サーキュ"]
 
-_AIRVOL_VALUES = {"弱": "1", "標準": "2", "高": "3", "最高": "5"}
-_HUMD_VALUES   = {"無": "0", "弱": "1", "標準": "2", "高": "3"}
-
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -40,35 +34,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
-    entity = Aircleaner(data["coordinator"], data["api"], entry)
-    async_add_entities([entity])
-
-    async def handle_set_airvol(call: ServiceCall) -> None:
-        label = call.data["airvol"]
-        airvol = _AIRVOL_VALUES.get(label)
-        if airvol is None:
-            _LOGGER.error("Unknown airvol: %s", label)
-            return
-        await entity._set({"airvol": airvol})
-
-    async def handle_set_humd(call: ServiceCall) -> None:
-        label = call.data["humd"]
-        humd = _HUMD_VALUES.get(label)
-        if humd is None:
-            _LOGGER.error("Unknown humd: %s", label)
-            return
-        await entity._set({"humd": humd})
-
-    hass.services.async_register(
-        DOMAIN, "set_airvol",
-        handle_set_airvol,
-        schema=vol.Schema({vol.Required("airvol"): cv.string}),
-    )
-    hass.services.async_register(
-        DOMAIN, "set_humd",
-        handle_set_humd,
-        schema=vol.Schema({vol.Required("humd"): cv.string}),
-    )
+    async_add_entities([Aircleaner(data["coordinator"], data["api"], entry)])
 
 
 class Aircleaner(CoordinatorEntity, FanEntity):
