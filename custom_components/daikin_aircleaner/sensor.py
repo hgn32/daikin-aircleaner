@@ -67,7 +67,7 @@ class TemperatureSensor(_BaseSensor):
 
 
 class HumiditySensor(_BaseSensor):
-    _attr_translation_key = "indoor_humidity"
+    _attr_translation_key = "humidity"
     _attr_device_class = SensorDeviceClass.HUMIDITY
     _attr_native_unit_of_measurement = PERCENTAGE
 

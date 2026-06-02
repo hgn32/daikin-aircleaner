@@ -165,14 +165,14 @@ class CleanerAPI:
                     continue
                 key, val = pair.split("=", 1)
                 if key == "mac":
-                    return val.strip()
+                    return urllib.parse.unquote(val, encoding="UTF-8")
         except Exception as err:
-            _LOGGER.error("Failed to fetch basic_info: %s", err)
+            _LOGGER.error("Failed to get MAC: %s", err)
         return None
 
     async def get(self) -> dict:
         response: dict = {}
-        for ep in ("get_control_info", "get_unit_status", "get_sensor_info"):
+        for ep in ("get_control_info", "get_unit_status", "get_sensor_info", "get_device_setting"):
             try:
                 text = await self._request(ep)
             except Exception as err:
@@ -191,4 +191,11 @@ class CleanerAPI:
             return await self._request("set_control_info", params=data)
         except Exception as err:
             _LOGGER.error("Failed to set control info %s: %s", data, err)
+            return ""
+
+    async def set_device_setting(self, data: dict) -> str:
+        try:
+            return await self._request("set_device_setting", params=data)
+        except Exception as err:
+            _LOGGER.error("Failed to set device setting %s: %s", data, err)
             return ""

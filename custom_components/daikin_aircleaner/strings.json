@@ -18,18 +18,15 @@
   },
   "entity": {
     "sensor": {
-      "temperature":    { "name": "Temperature" },
-      "indoor_humidity":{ "name": "Indoor Humidity" },
-      "dust":           { "name": "Dust" },
-      "odor":           { "name": "Odor" }
+      "temperature": { "name": "Temperature" },
+      "humidity":    { "name": "Humidity" },
+      "dust":        { "name": "Dust" },
+      "odor":        { "name": "Odor" }
     },
     "select": {
-      "fan_speed": {
-        "name": "Fan Speed"
-      },
-      "humidity": {
-        "name": "Humidity"
-      }
+      "fan_speed": { "name": "Fan Speed" },
+      "humidity":  { "name": "Humidity" },
+      "led":       { "name": "LED Display" }
     }
   }
 }

@@ -19,6 +19,9 @@ _LABEL_TO_AIRVOL = {v: k for k, v in _AIRVOL_TO_LABEL.items()}
 _HUMD_TO_LABEL = {"0": "無", "1": "弱", "2": "標準", "3": "高"}
 _LABEL_TO_HUMD = {v: k for k, v in _HUMD_TO_LABEL.items()}
 
+_LED_TO_LABEL = {"0": "Bright", "1": "Dim", "2": "Off"}
+_LABEL_TO_LED = {v: k for k, v in _LED_TO_LABEL.items()}
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -29,6 +32,7 @@ async def async_setup_entry(
     async_add_entities([
         AirvolSelect(data["coordinator"], data["api"], entry),
         HumdSelect(data["coordinator"], data["api"], entry),
+        LedSelect(data["coordinator"], data["api"], entry),
     ])
 
 
@@ -111,3 +115,31 @@ class HumdSelect(_BaseSelect):
             _LOGGER.error("Unknown humd option: %s", option)
             return
         await self._set({"humd": humd})
+
+
+class LedSelect(_BaseSelect):
+    _attr_translation_key = "led"
+    _attr_options = list(_LED_TO_LABEL.values())
+    _attr_icon = "mdi:led-variant-on"
+
+    def __init__(self, coordinator, api, entry: ConfigEntry) -> None:
+        super().__init__(coordinator, api, entry, "led")
+
+    @property
+    def current_option(self) -> str | None:
+        val = (self.coordinator.data or {}).get("led_dsp")
+        return _LED_TO_LABEL.get(val or "", None)
+
+    async def async_select_option(self, option: str) -> None:
+        val = _LABEL_TO_LED.get(option)
+        if val is None:
+            _LOGGER.error("Unknown led option: %s", option)
+            return
+        d = self.coordinator.data or {}
+        device_params = {k: d[k] for k in ("led_dsp", "d_sns", "c_lock", "streamer", "act_ion", "buzzer", "turbo", "eco_moni") if k in d}
+        device_params["led_dsp"] = val
+        response = await self._api.set_device_setting(device_params)
+        if response and "ret=OK" in response:
+            await self.coordinator.async_request_refresh()
+        else:
+            _LOGGER.error("Failed to set led: %s, response: %s", device_params, response)

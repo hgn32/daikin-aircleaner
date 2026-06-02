@@ -18,18 +18,15 @@
   },
   "entity": {
     "sensor": {
-      "temperature":    { "name": "室温" },
-      "indoor_humidity":{ "name": "室内湿度" },
-      "dust":           { "name": "ほこり" },
-      "odor":           { "name": "におい" }
+      "temperature": { "name": "室温" },
+      "humidity":    { "name": "室内湿度" },
+      "dust":        { "name": "ほこり" },
+      "odor":        { "name": "におい" }
     },
     "select": {
-      "fan_speed": {
-        "name": "風量"
-      },
-      "humidity": {
-        "name": "加湿"
-      }
+      "fan_speed": { "name": "風量" },
+      "humidity":  { "name": "加湿" },
+      "led":       { "name": "LED表示" }
     }
   }
 }
